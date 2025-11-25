@@ -83,9 +83,169 @@ async def reason_selected(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer("Укажите марку авто")
         await state.set_state(FormStates.other_brand)
 
-# ... (все обработчики из предыдущего финального кода) ...
+# === УСТАНОВКА СИГНАЛИЗАЦИИ ===
+@router.message(FormStates.alarm_brand)
+async def alarm_brand_handler(message: Message, state: FSMContext):
+    await state.update_data(alarm_brand=message.text)
+    await message.answer("Укажите модель авто")
+    await state.set_state(FormStates.alarm_model)
 
-# === ФИНАЛ ===
+@router.message(FormStates.alarm_model)
+async def alarm_model_handler(message: Message, state: FSMContext):
+    await state.update_data(alarm_model=message.text)
+    await message.answer("Укажите год своего автомобиля")
+    await state.set_state(FormStates.alarm_year)
+
+@router.message(FormStates.alarm_year)
+async def alarm_year_handler(message: Message, state: FSMContext):
+    await state.update_data(alarm_year=message.text)
+    await message.answer("Укажите объём двигателя")
+    await state.set_state(FormStates.alarm_engine_volume)
+
+@router.message(FormStates.alarm_engine_volume)
+async def alarm_engine_volume_handler(message: Message, state: FSMContext):
+    await state.update_data(alarm_engine_volume=message.text)
+    await message.answer("Укажите тип двигателя (бензин, дизель)")
+    await state.set_state(FormStates.alarm_engine_type)
+
+@router.message(FormStates.alarm_engine_type)
+async def alarm_engine_type_handler(message: Message, state: FSMContext):
+    await state.update_data(alarm_engine_type=message.text)
+    await message.answer("Укажите, как запускается авто (с ключа или с кнопки Start/Stop)")
+    await state.set_state(FormStates.alarm_start_type)
+
+@router.message(FormStates.alarm_start_type)
+async def alarm_start_type_handler(message: Message, state: FSMContext):
+    await state.update_data(alarm_start_type=message.text)
+    await message.answer("Укажите, что бы вы хотели получить от сигнализации (функционал)")
+    await state.set_state(FormStates.alarm_functionality)
+
+@router.message(FormStates.alarm_functionality)
+async def alarm_functionality_handler(message: Message, state: FSMContext):
+    await state.update_data(alarm_functionality=message.text)
+    data = await state.get_data()
+    client_name = data.get("client_name", "Клиент")
+    await message.answer(f"{client_name}, ваша заявка передана менеджеру, пожалуйста укажите, как к вам можно обращаться.")
+    await state.set_state(FormStates.waiting_for_name)
+
+# === ДИАГНОСТИКА И РЕМОНТ ===
+@router.message(FormStates.repair_brand)
+async def repair_brand_handler(message: Message, state: FSMContext):
+    await state.update_data(repair_brand=message.text)
+    await message.answer("Укажите модель авто")
+    await state.set_state(FormStates.repair_model)
+
+@router.message(FormStates.repair_model)
+async def repair_model_handler(message: Message, state: FSMContext):
+    await state.update_data(repair_model=message.text)
+    await message.answer("Укажите год своего автомобиля")
+    await state.set_state(FormStates.repair_year)
+
+@router.message(FormStates.repair_year)
+async def repair_year_handler(message: Message, state: FSMContext):
+    await state.update_data(repair_year=message.text)
+    await message.answer("Укажите объём двигателя")
+    await state.set_state(FormStates.repair_engine_volume)
+
+@router.message(FormStates.repair_engine_volume)
+async def repair_engine_volume_handler(message: Message, state: FSMContext):
+    await state.update_data(repair_engine_volume=message.text)
+    await message.answer("Укажите тип двигателя (бензин, дизель)")
+    await state.set_state(FormStates.repair_engine_type)
+
+@router.message(FormStates.repair_engine_type)
+async def repair_engine_type_handler(message: Message, state: FSMContext):
+    await state.update_data(repair_engine_type=message.text)
+    await message.answer("Укажите, как запускается авто (с ключа или с кнопки Start/Stop)")
+    await state.set_state(FormStates.repair_start_type)
+
+@router.message(FormStates.repair_start_type)
+async def repair_start_type_handler(message: Message, state: FSMContext):
+    await state.update_data(repair_start_type=message.text)
+    await message.answer("Подробно опишите вашу проблему с автомобилем")
+    await state.set_state(FormStates.repair_problem)
+
+@router.message(FormStates.repair_problem)
+async def repair_problem_handler(message: Message, state: FSMContext):
+    await state.update_data(repair_problem=message.text)
+    data = await state.get_data()
+    client_name = data.get("client_name", "Клиент")
+    await message.answer(f"{client_name}, ваша заявка передана менеджеру, пожалуйста укажите, как к вам можно обращаться.")
+    await state.set_state(FormStates.waiting_for_name)
+
+# === УСТАНОВКА ДОП. ОБОРУДОВАНИЯ ===
+@router.message(FormStates.extra_brand)
+async def extra_brand_handler(message: Message, state: FSMContext):
+    await state.update_data(extra_brand=message.text)
+    await message.answer("Укажите модель авто")
+    await state.set_state(FormStates.extra_model)
+
+@router.message(FormStates.extra_model)
+async def extra_model_handler(message: Message, state: FSMContext):
+    await state.update_data(extra_model=message.text)
+    await message.answer("Укажите год своего автомобиля")
+    await state.set_state(FormStates.extra_year)
+
+@router.message(FormStates.extra_year)
+async def extra_year_handler(message: Message, state: FSMContext):
+    await state.update_data(extra_year=message.text)
+    await message.answer("Подробно укажите, что бы вы хотели установить на ваш автомобиль")
+    await state.set_state(FormStates.extra_equipment)
+
+@router.message(FormStates.extra_equipment)
+async def extra_equipment_handler(message: Message, state: FSMContext):
+    await state.update_data(extra_equipment=message.text)
+    data = await state.get_data()
+    client_name = data.get("client_name", "Клиент")
+    await message.answer(f"{client_name}, ваша заявка передана менеджеру, пожалуйста укажите, как к вам можно обращаться.")
+    await state.set_state(FormStates.waiting_for_name)
+
+# === ДРУГАЯ ПРИЧИНА ===
+@router.message(FormStates.other_brand)
+async def other_brand_handler(message: Message, state: FSMContext):
+    await state.update_data(other_brand=message.text)
+    await message.answer("Укажите модель авто")
+    await state.set_state(FormStates.other_model)
+
+@router.message(FormStates.other_model)
+async def other_model_handler(message: Message, state: FSMContext):
+    await state.update_data(other_model=message.text)
+    await message.answer("Укажите год своего автомобиля")
+    await state.set_state(FormStates.other_year)
+
+@router.message(FormStates.other_year)
+async def other_year_handler(message: Message, state: FSMContext):
+    await state.update_data(other_year=message.text)
+    await message.answer("Укажите объём двигателя")
+    await state.set_state(FormStates.other_engine_volume)
+
+@router.message(FormStates.other_engine_volume)
+async def other_engine_volume_handler(message: Message, state: FSMContext):
+    await state.update_data(other_engine_volume=message.text)
+    await message.answer("Укажите тип двигателя (бензин, дизель)")
+    await state.set_state(FormStates.other_engine_type)
+
+@router.message(FormStates.other_engine_type)
+async def other_engine_type_handler(message: Message, state: FSMContext):
+    await state.update_data(other_engine_type=message.text)
+    await message.answer("Укажите, как запускается авто (с ключа или с кнопки Start/Stop)")
+    await state.set_state(FormStates.other_start_type)
+
+@router.message(FormStates.other_start_type)
+async def other_start_type_handler(message: Message, state: FSMContext):
+    await state.update_data(other_start_type=message.text)
+    await message.answer("Пожалуйста, опишите проблему, с которой вы столкнулись, и симптомы её возникновения как можно подробнее")
+    await state.set_state(FormStates.other_problem)
+
+@router.message(FormStates.other_problem)
+async def other_problem_handler(message: Message, state: FSMContext):
+    await state.update_data(other_problem=message.text)
+    data = await state.get_data()
+    client_name = data.get("client_name", "Клиент")
+    await message.answer(f"{client_name}, ваша заявка передана менеджеру, пожалуйста укажите, как к вам можно обращаться.")
+    await state.set_state(FormStates.waiting_for_name)
+
+# === ФИНАЛ: ИМЯ → ТЕЛЕФОН → ОТПРАВКА МЕНЕДЖЕРУ ===
 @router.message(FormStates.waiting_for_name)
 async def get_contact_name(message: Message, state: FSMContext):
     if message.text:
@@ -120,7 +280,7 @@ async def get_phone(message: Message, state: FSMContext):
     lines.append(f"Телефон: {contact_phone}")
     lines.append("")
 
-    if "alarm_brand" in 
+    if "alarm_brand" in data:
         lines.append("Тип обращения: Установка сигнализации")
         lines.append(f"Марка авто: {data['alarm_brand']}")
         lines.append(f"Модель: {data['alarm_model']}")
@@ -129,7 +289,7 @@ async def get_phone(message: Message, state: FSMContext):
         lines.append(f"Тип двигателя: {data['alarm_engine_type']}")
         lines.append(f"Запуск авто: {data['alarm_start_type']}")
         lines.append(f"Функционал сигнализации: {data['alarm_functionality']}")
-    elif "repair_brand" in 
+    elif "repair_brand" in data:
         lines.append("Тип обращения: Диагностика и ремонт")
         lines.append(f"Марка авто: {data['repair_brand']}")
         lines.append(f"Модель: {data['repair_model']}")
@@ -138,13 +298,13 @@ async def get_phone(message: Message, state: FSMContext):
         lines.append(f"Тип двигателя: {data['repair_engine_type']}")
         lines.append(f"Запуск авто: {data['repair_start_type']}")
         lines.append(f"Описание проблемы: {data['repair_problem']}")
-    elif "extra_brand" in 
+    elif "extra_brand" in data:
         lines.append("Тип обращения: Установка дополнительного оборудования")
         lines.append(f"Марка авто: {data['extra_brand']}")
         lines.append(f"Модель: {data['extra_model']}")
         lines.append(f"Год: {data['extra_year']}")
         lines.append(f"Оборудование: {data['extra_equipment']}")
-    elif "other_brand" in 
+    elif "other_brand" in data:
         lines.append("Тип обращения: Другая причина")
         lines.append(f"Марка авто: {data['other_brand']}")
         lines.append(f"Модель: {data['other_model']}")
