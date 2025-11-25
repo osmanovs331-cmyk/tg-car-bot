@@ -6,13 +6,21 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKe
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp import web
 
+# --- Настройки ---
 logging.basicConfig(level=logging.INFO)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 MANAGER_ID = int(os.getenv("MANAGER_ID"))
 BOT_ID = int(BOT_TOKEN.split(':')[0])
 
+# --- URL вебхука (Render даёт URL вида https://ваше-имя.onrender.com) ---
+WEBHOOK_PATH = "/webhook"
+WEBHOOK_URL = f"https://tg-car-bot.onrender.com{WEBHOOK_PATH}"
+
+# --- FSM Состояния ---
 class FormStates(StatesGroup):
     waiting_for_name = State()
     waiting_for_phone = State()
@@ -42,6 +50,7 @@ class FormStates(StatesGroup):
     other_start_type = State()
     other_problem = State()
 
+# --- Клавиатура ---
 def get_reason_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Установка сигнализации", callback_data="reason_alarm")],
@@ -50,10 +59,12 @@ def get_reason_keyboard():
         [InlineKeyboardButton(text="Другая причина", callback_data="reason_other")]
     ])
 
+# --- Инициализация ---
 router = Router()
 dp = Dispatcher(storage=MemoryStorage())
 dp.include_router(router)
 
+# === ОСНОВНЫЕ ОБРАБОТЧИКИ (без изменений) ===
 @router.message(F.text, State(None))
 async def start_conversation(message: Message, state: FSMContext):
     if message.from_user.id == BOT_ID:
@@ -280,7 +291,7 @@ async def get_phone(message: Message, state: FSMContext):
     lines.append(f"Телефон: {contact_phone}")
     lines.append("")
 
-    if "alarm_brand" in data:
+    if "alarm_brand" in 
         lines.append("Тип обращения: Установка сигнализации")
         lines.append(f"Марка авто: {data['alarm_brand']}")
         lines.append(f"Модель: {data['alarm_model']}")
@@ -289,7 +300,7 @@ async def get_phone(message: Message, state: FSMContext):
         lines.append(f"Тип двигателя: {data['alarm_engine_type']}")
         lines.append(f"Запуск авто: {data['alarm_start_type']}")
         lines.append(f"Функционал сигнализации: {data['alarm_functionality']}")
-    elif "repair_brand" in data:
+    elif "repair_brand" in 
         lines.append("Тип обращения: Диагностика и ремонт")
         lines.append(f"Марка авто: {data['repair_brand']}")
         lines.append(f"Модель: {data['repair_model']}")
@@ -298,13 +309,13 @@ async def get_phone(message: Message, state: FSMContext):
         lines.append(f"Тип двигателя: {data['repair_engine_type']}")
         lines.append(f"Запуск авто: {data['repair_start_type']}")
         lines.append(f"Описание проблемы: {data['repair_problem']}")
-    elif "extra_brand" in data:
+    elif "extra_brand" in 
         lines.append("Тип обращения: Установка дополнительного оборудования")
         lines.append(f"Марка авто: {data['extra_brand']}")
         lines.append(f"Модель: {data['extra_model']}")
         lines.append(f"Год: {data['extra_year']}")
         lines.append(f"Оборудование: {data['extra_equipment']}")
-    elif "other_brand" in data:
+    elif "other_brand" in 
         lines.append("Тип обращения: Другая причина")
         lines.append(f"Марка авто: {data['other_brand']}")
         lines.append(f"Модель: {data['other_model']}")
@@ -328,10 +339,29 @@ async def get_phone(message: Message, state: FSMContext):
     )
     await state.clear()
 
+# === ВЕБХУКИ ===
+async def on_startup(bot: Bot):
+    await bot.set_webhook(WEBHOOK_URL)
+
+async def on_shutdown(bot: Bot):
+    await bot.delete_webhook()
+
+# === ЗАПУСК ===
 async def main():
     bot = Bot(token=BOT_TOKEN)
-    logging.info("✅ Бот запущен и готов к работе!")
-    await dp.start_polling(bot)
+    dp.startup.register(on_startup)
+    dp.shutdown.register(on_shutdown)
+
+    app = web.Application()
+    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host="0.0.0.0", port=8080)
+    await site.start()
+
+    logging.info(f"✅ Бот запущен через вебхук: {WEBHOOK_URL}")
+    # Бесконечное ожидание
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
     asyncio.run(main())
