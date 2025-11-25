@@ -14,6 +14,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 MANAGER_ID = int(os.getenv("MANAGER_ID"))
 BOT_ID = int(BOT_TOKEN.split(':')[0])
 
+# --- Состояния ---
 class FormStates(StatesGroup):
     waiting_for_name = State()
     waiting_for_phone = State()
@@ -43,6 +44,7 @@ class FormStates(StatesGroup):
     other_start_type = State()
     other_problem = State()
 
+# --- Клавиатура ---
 def get_reason_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Установка сигнализации", callback_data="reason_alarm")],
@@ -51,10 +53,12 @@ def get_reason_keyboard():
         [InlineKeyboardButton(text="Другая причина", callback_data="reason_other")]
     ])
 
+# --- Инициализация ---
 router = Router()
 dp = Dispatcher(storage=MemoryStorage())
 dp.include_router(router)
 
+# --- Начало диалога ---
 @router.message(F.text, State(None))
 async def start_conversation(message: Message, state: FSMContext):
     if message.from_user.id == BOT_ID:
@@ -66,6 +70,7 @@ async def start_conversation(message: Message, state: FSMContext):
     )
     await state.update_data(client_name=user_name, client_id=message.from_user.id)
 
+# --- Обработка кнопок ---
 @router.callback_query(F.data.startswith("reason_"))
 async def reason_selected(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
@@ -113,7 +118,7 @@ async def alarm_engine_volume_handler(message: Message, state: FSMContext):
 async def alarm_engine_type_handler(message: Message, state: FSMContext):
     await state.update_data(alarm_engine_type=message.text)
     await message.answer("Укажите, как запускается авто (с ключа или с кнопки Start/Stop)")
-    await state.set_state(FormStates.alarm_start_type)
+    await state.set_state(FormStates.alarm_start_t)
 
 @router.message(FormStates.alarm_start_type)
 async def alarm_start_type_handler(message: Message, state: FSMContext):
@@ -246,7 +251,7 @@ async def other_problem_handler(message: Message, state: FSMContext):
     await message.answer(f"{client_name}, ваша заявка передана менеджеру, пожалуйста укажите, как к вам можно обращаться.")
     await state.set_state(FormStates.waiting_for_name)
 
-# === ФИНАЛ: ИМЯ → ТЕЛЕФОН → ОТПРАВКА МЕНЕДЖЕРУ ===
+# === ФИНАЛ: ИМЯ → ТЕЛЕФОН ===
 @router.message(FormStates.waiting_for_name)
 async def get_contact_name(message: Message, state: FSMContext):
     if message.text:
@@ -275,13 +280,14 @@ async def get_phone(message: Message, state: FSMContext):
     else:
         client_link = client_display
 
+    # === ПОЛНЫЙ ОТЧЁТ ===
     lines = ["📩 **НОВАЯ ЗАЯВКА**\n"]
     lines.append(f"Клиент: {client_link}")
     lines.append(f"Обращаться как: {contact_name}")
     lines.append(f"Телефон: {contact_phone}")
     lines.append("")
 
-    if "alarm_brand" in 
+    if "alarm_brand" in data:
         lines.append("Тип обращения: Установка сигнализации")
         lines.append(f"Марка авто: {data['alarm_brand']}")
         lines.append(f"Модель: {data['alarm_model']}")
@@ -290,7 +296,7 @@ async def get_phone(message: Message, state: FSMContext):
         lines.append(f"Тип двигателя: {data['alarm_engine_type']}")
         lines.append(f"Запуск авто: {data['alarm_start_type']}")
         lines.append(f"Функционал сигнализации: {data['alarm_functionality']}")
-    elif "repair_brand" in 
+    elif "repair_brand" in data:
         lines.append("Тип обращения: Диагностика и ремонт")
         lines.append(f"Марка авто: {data['repair_brand']}")
         lines.append(f"Модель: {data['repair_model']}")
@@ -299,7 +305,7 @@ async def get_phone(message: Message, state: FSMContext):
         lines.append(f"Тип двигателя: {data['repair_engine_type']}")
         lines.append(f"Запуск авто: {data['repair_start_type']}")
         lines.append(f"Описание проблемы: {data['repair_problem']}")
-    elif "extra_brand" in 
+    elif "extra_brand" in data:
         lines.append("Тип обращения: Установка дополнительного оборудования")
         lines.append(f"Марка авто: {data['extra_brand']}")
         lines.append(f"Модель: {data['extra_model']}")
@@ -329,6 +335,7 @@ async def get_phone(message: Message, state: FSMContext):
     )
     await state.clear()
 
+# === ЗАПУСК ===
 async def main():
     bot = Bot(token=BOT_TOKEN)
     logging.info("✅ Бот запущен и готов к работе!")
