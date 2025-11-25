@@ -16,11 +16,12 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 MANAGER_ID = int(os.getenv("MANAGER_ID"))
 BOT_ID = int(BOT_TOKEN.split(':')[0])
 
-# --- URL вебхука (Render даёт URL вида https://ваше-имя.onrender.com) ---
+# --- URL вебхука ---
 WEBHOOK_PATH = "/webhook"
+# Замените "tg-car-bot" на имя вашего сервиса в Render (например, yourname.onrender.com)
 WEBHOOK_URL = f"https://tg-car-bot.onrender.com{WEBHOOK_PATH}"
 
-# --- FSM Состояния ---
+# --- Состояния FSM ---
 class FormStates(StatesGroup):
     waiting_for_name = State()
     waiting_for_phone = State()
@@ -50,7 +51,7 @@ class FormStates(StatesGroup):
     other_start_type = State()
     other_problem = State()
 
-# --- Клавиатура ---
+# --- Клавиатура выбора причины ---
 def get_reason_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Установка сигнализации", callback_data="reason_alarm")],
@@ -64,7 +65,7 @@ router = Router()
 dp = Dispatcher(storage=MemoryStorage())
 dp.include_router(router)
 
-# === ОСНОВНЫЕ ОБРАБОТЧИКИ (без изменений) ===
+# --- Начало диалога ---
 @router.message(F.text, State(None))
 async def start_conversation(message: Message, state: FSMContext):
     if message.from_user.id == BOT_ID:
@@ -76,6 +77,7 @@ async def start_conversation(message: Message, state: FSMContext):
     )
     await state.update_data(client_name=user_name, client_id=message.from_user.id)
 
+# --- Обработка кнопок ---
 @router.callback_query(F.data.startswith("reason_"))
 async def reason_selected(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
@@ -291,7 +293,7 @@ async def get_phone(message: Message, state: FSMContext):
     lines.append(f"Телефон: {contact_phone}")
     lines.append("")
 
-    if "alarm_brand" in 
+    if "alarm_brand" in data:
         lines.append("Тип обращения: Установка сигнализации")
         lines.append(f"Марка авто: {data['alarm_brand']}")
         lines.append(f"Модель: {data['alarm_model']}")
@@ -300,7 +302,7 @@ async def get_phone(message: Message, state: FSMContext):
         lines.append(f"Тип двигателя: {data['alarm_engine_type']}")
         lines.append(f"Запуск авто: {data['alarm_start_type']}")
         lines.append(f"Функционал сигнализации: {data['alarm_functionality']}")
-    elif "repair_brand" in 
+    elif "repair_brand" in data:
         lines.append("Тип обращения: Диагностика и ремонт")
         lines.append(f"Марка авто: {data['repair_brand']}")
         lines.append(f"Модель: {data['repair_model']}")
@@ -309,13 +311,13 @@ async def get_phone(message: Message, state: FSMContext):
         lines.append(f"Тип двигателя: {data['repair_engine_type']}")
         lines.append(f"Запуск авто: {data['repair_start_type']}")
         lines.append(f"Описание проблемы: {data['repair_problem']}")
-    elif "extra_brand" in 
+    elif "extra_brand" in data:
         lines.append("Тип обращения: Установка дополнительного оборудования")
         lines.append(f"Марка авто: {data['extra_brand']}")
         lines.append(f"Модель: {data['extra_model']}")
         lines.append(f"Год: {data['extra_year']}")
         lines.append(f"Оборудование: {data['extra_equipment']}")
-    elif "other_brand" in 
+    elif "other_brand" in data:
         lines.append("Тип обращения: Другая причина")
         lines.append(f"Марка авто: {data['other_brand']}")
         lines.append(f"Модель: {data['other_model']}")
@@ -360,7 +362,6 @@ async def main():
     await site.start()
 
     logging.info(f"✅ Бот запущен через вебхук: {WEBHOOK_URL}")
-    # Бесконечное ожидание
     await asyncio.Event().wait()
 
 if __name__ == "__main__":
